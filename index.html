@@ -7,6 +7,11 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <title>Padel Scoreboard - SMU Radio Libertad</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
     <style>
       :root {
         --smu-red: #d03539;
@@ -264,104 +269,187 @@
     </div>
 
     <script>
+      // Firebase Configuration (Replace with your config)
+      const firebaseConfig = {
+        apiKey: "AIzaSyCNrxD4Dt3hfQDxix5o7MZ7nd6PdRzaHuk",
+        authDomain: "padel-18f82.firebaseapp.com",
+        projectId: "padel-18f82",
+        storageBucket: "padel-18f82.firebasestorage.app",
+        messagingSenderId: "205345015948",
+        appId: "1:205345015948:web:467217faf8812f10ba53a9",
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      const scoreboardRef = db.collection("scoreboards").doc("currentMatch");
+
+      // Initialize Firestore document with default values if it doesn't exist
+      scoreboardRef.get().then((doc) => {
+        if (!doc.exists) {
+          scoreboardRef.set({
+            team1Name: "Team 1",
+            team2Name: "Team 2",
+            team1Sets: 0,
+            team2Sets: 0,
+            team1Games: 0,
+            team2Games: 0,
+            team1Points: 0,
+            team2Points: 0,
+            isSuperTiebreak: false,
+            currentSet: 1,
+          });
+        }
+      });
+
+      // Game State
       let isSuperTiebreak = false;
       let currentSet = 1;
       const pointSequence = [0, 15, 30, 40];
 
-      function updateElement(id, value) {
-        const element = document.getElementById(id);
-        element.textContent = value;
-        element.style.background = "rgba(255,255,255,0.2)";
-        setTimeout(() => (element.style.background = ""), 200);
-        localStorage.setItem("padelScoreboard", JSON.stringify(getState()));
-      }
+      // Real-time Listener
+      scoreboardRef.onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          updateUI(data);
+          isSuperTiebreak = data.isSuperTiebreak || false;
+          currentSet = data.currentSet || 1;
+        }
+      });
 
-      function getState() {
-        return {
-          team1Name: document.getElementById("team1Name").textContent,
-          team2Name: document.getElementById("team2Name").textContent,
-          team1Sets: document.getElementById("team1Sets").textContent,
-          team2Sets: document.getElementById("team2Sets").textContent,
-          team1Games: document.getElementById("team1Games").textContent,
-          team2Games: document.getElementById("team2Games").textContent,
-          team1Points: document.getElementById("team1Points").textContent,
-          team2Points: document.getElementById("team2Points").textContent,
-        };
-      }
-
-      function handlePoint(team) {
-        const pointsId = `${team}Points`;
-        let currentPoints = parseInt(
-          document.getElementById(pointsId).textContent
+      function updateUI(data) {
+        // Ensure numbers are properly formatted
+        document.getElementById("team1Name").textContent =
+          data.team1Name || "Team 1";
+        document.getElementById("team2Name").textContent =
+          data.team2Name || "Team 2";
+        document.getElementById("team1Sets").textContent = Number(
+          data.team1Sets || 0
         );
+        document.getElementById("team2Sets").textContent = Number(
+          data.team2Sets || 0
+        );
+        document.getElementById("team1Games").textContent = Number(
+          data.team1Games || 0
+        );
+        document.getElementById("team2Games").textContent = Number(
+          data.team2Games || 0
+        );
+        document.getElementById("team1Points").textContent = Number(
+          data.team1Points || 0
+        );
+        document.getElementById("team2Points").textContent = Number(
+          data.team2Points || 0
+        );
+      }
+
+      // Modified handlePoint function with number validation
+      async function handlePoint(team) {
         const opponent = team === "team1" ? "team2" : "team1";
+        const points =
+          parseInt(document.getElementById(`${team}Points`).textContent) || 0;
 
-        if (isSuperTiebreak) {
-          currentPoints++;
-          updateElement(pointsId, currentPoints);
-          checkSuperTiebreak(team, opponent);
-        } else {
-          const currentIndex = pointSequence.indexOf(currentPoints);
-          if (currentIndex === 3) {
-            checkGameWin(team, opponent);
+        try {
+          if (isSuperTiebreak) {
+            await scoreboardRef.update({
+              [`${team}Points`]: points + 1,
+            });
+            checkSuperTiebreak(team, opponent);
           } else {
-            updateElement(pointsId, pointSequence[currentIndex + 1]);
+            const currentIndex = pointSequence.indexOf(points);
+            if (currentIndex === 3) {
+              checkGameWin(team, opponent);
+            } else {
+              await scoreboardRef.update({
+                [`${team}Points`]: pointSequence[currentIndex + 1],
+              });
+            }
           }
+        } catch (error) {
+          console.error("Error updating points: ", error);
         }
       }
 
-      function adjustPoints(team, change) {
-        const pointsId = `${team}Points`;
-        let currentPoints = parseInt(
-          document.getElementById(pointsId).textContent
-        );
+      // Modified adjustPoints function with number validation
+      async function adjustPoints(team, change) {
+        const points =
+          parseInt(document.getElementById(`${team}Points`).textContent) || 0;
 
-        if (isSuperTiebreak) {
-          currentPoints = Math.max(0, currentPoints + change);
-          updateElement(pointsId, currentPoints);
-        } else {
-          const currentIndex = pointSequence.indexOf(currentPoints);
-          const newIndex = Math.max(0, currentIndex + change);
-          updateElement(pointsId, pointSequence[newIndex]);
+        try {
+          if (isSuperTiebreak) {
+            await scoreboardRef.update({
+              [`${team}Points`]: Math.max(0, points + change),
+            });
+          } else {
+            const currentIndex = pointSequence.indexOf(points);
+            const newIndex = Math.max(0, currentIndex + change);
+            await scoreboardRef.update({
+              [`${team}Points`]: pointSequence[newIndex],
+            });
+          }
+        } catch (error) {
+          console.error("Error adjusting points: ", error);
         }
       }
 
-      function checkGameWin(team, opponent) {
-        updateElement(`${team}Points`, 0);
-        const gamesId = `${team}Games`;
-        const currentGames =
-          parseInt(document.getElementById(gamesId).textContent) + 1;
-        updateElement(gamesId, currentGames);
+      async function checkGameWin(team, opponent) {
+        try {
+          await scoreboardRef.update({
+            [`${team}Points`]: 0,
+            [`${team}Games`]:
+              parseInt(document.getElementById(`${team}Games`).textContent) + 1,
+          });
 
-        const opponentGames = parseInt(
-          document.getElementById(`${opponent}Games`).textContent
-        );
+          const teamGames = parseInt(
+            document.getElementById(`${team}Games`).textContent
+          );
+          const opponentGames = parseInt(
+            document.getElementById(`${opponent}Games`).textContent
+          );
 
-        if (currentGames >= 6 && currentGames - opponentGames >= 2) {
-          awardSet(team);
-        } else if (currentGames === 6 && opponentGames === 6) {
-          startSuperTiebreak();
+          if (teamGames >= 6 && teamGames - opponentGames >= 2) {
+            await awardSet(team);
+          } else if (teamGames === 6 && opponentGames === 6) {
+            await startSuperTiebreak();
+          }
+        } catch (error) {
+          console.error("Error handling game win: ", error);
         }
       }
 
-      function awardSet(team) {
-        const setsId = `${team}Sets`;
-        updateElement(
-          setsId,
-          parseInt(document.getElementById(setsId).textContent) + 1
-        );
-        resetGames();
-        currentSet++;
-        if (currentSet > 3) endMatch();
+      async function awardSet(team) {
+        try {
+          await scoreboardRef.update({
+            [`${team}Sets`]:
+              parseInt(document.getElementById(`${team}Sets`).textContent) + 1,
+            team1Games: 0,
+            team2Games: 0,
+            team1Points: 0,
+            team2Points: 0,
+            currentSet: currentSet + 1,
+          });
+
+          if (currentSet + 1 > 3) {
+            endMatch();
+          }
+        } catch (error) {
+          console.error("Error awarding set: ", error);
+        }
       }
 
-      function startSuperTiebreak() {
-        isSuperTiebreak = true;
-        updateElement("team1Points", 0);
-        updateElement("team2Points", 0);
+      async function startSuperTiebreak() {
+        try {
+          await scoreboardRef.update({
+            isSuperTiebreak: true,
+            team1Points: 0,
+            team2Points: 0,
+          });
+        } catch (error) {
+          console.error("Error starting super tiebreak: ", error);
+        }
       }
 
-      function checkSuperTiebreak(team, opponent) {
+      async function checkSuperTiebreak(team, opponent) {
         const teamPoints = parseInt(
           document.getElementById(`${team}Points`).textContent
         );
@@ -370,58 +458,72 @@
         );
 
         if (teamPoints >= 10 && teamPoints - opponentPoints >= 2) {
-          awardSet(team);
-          isSuperTiebreak = false;
-        }
-      }
-
-      function resetGames() {
-        updateElement("team1Games", 0);
-        updateElement("team2Games", 0);
-        updateElement("team1Points", 0);
-        updateElement("team2Points", 0);
-      }
-
-      function resetAll() {
-        if (confirm("Are you sure you want to reset all scores?")) {
-          localStorage.removeItem("padelScoreboard");
-          ["team1", "team2"].forEach((team) => {
-            ["Sets", "Games", "Points"].forEach((type) => {
-              updateElement(`${team}${type}`, 0);
+          await awardSet(team);
+          try {
+            await scoreboardRef.update({
+              isSuperTiebreak: false,
             });
-          });
-          isSuperTiebreak = false;
-          currentSet = 1;
-          document.getElementById("team1Name").textContent = "Team 1";
-          document.getElementById("team2Name").textContent = "Team 2";
-          document.getElementById("team1NameInput").value = "";
-          document.getElementById("team2NameInput").value = "";
+          } catch (error) {
+            console.error("Error ending super tiebreak: ", error);
+          }
         }
       }
 
-      // Initialize
+      async function resetAll() {
+        if (confirm("Are you sure you want to reset all scores?")) {
+          try {
+            await scoreboardRef.update({
+              team1Sets: 0,
+              team2Sets: 0,
+              team1Games: 0,
+              team2Games: 0,
+              team1Points: 0,
+              team2Points: 0,
+              isSuperTiebreak: false,
+              currentSet: 1,
+            });
+            document.getElementById("team1NameInput").value = "";
+            document.getElementById("team2NameInput").value = "";
+          } catch (error) {
+            console.error("Error resetting scores: ", error);
+          }
+        }
+      }
+
+      // Team Name Input Handlers
       document
         .getElementById("team1NameInput")
-        .addEventListener("input", (e) => {
-          document.getElementById("team1Name").textContent =
-            e.target.value || "Team 1";
-          localStorage.setItem("padelScoreboard", JSON.stringify(getState()));
-        });
-      document
-        .getElementById("team2NameInput")
-        .addEventListener("input", (e) => {
-          document.getElementById("team2Name").textContent =
-            e.target.value || "Team 2";
-          localStorage.setItem("padelScoreboard", JSON.stringify(getState()));
+        .addEventListener("input", async (e) => {
+          try {
+            await scoreboardRef.update({
+              team1Name: e.target.value || "Team 1",
+            });
+          } catch (error) {
+            console.error("Error updating team name: ", error);
+          }
         });
 
-      // Load saved state
-      const savedState = localStorage.getItem("padelScoreboard");
-      if (savedState) {
-        const state = JSON.parse(savedState);
-        Object.entries(state).forEach(([key, value]) => {
-          document.getElementById(key).textContent = value;
+      document
+        .getElementById("team2NameInput")
+        .addEventListener("input", async (e) => {
+          try {
+            await scoreboardRef.update({
+              team2Name: e.target.value || "Team 2",
+            });
+          } catch (error) {
+            console.error("Error updating team name: ", error);
+          }
         });
+
+      // Initial Load
+      scoreboardRef.get().then((doc) => {
+        if (doc.exists) {
+          updateUI(doc.data());
+        }
+      });
+
+      function endMatch() {
+        alert("Match finished! Reset to start new match.");
       }
     </script>
   </body>
