@@ -282,7 +282,7 @@
       // Initialize Firebase
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
-      const scoreboardRef = db.collection("scoreboards").doc("currentMatch");
+      const scoreboardRef = db.collection("scoreboards2").doc("currentMatch");
 
       // Initialize Firestore document with default values if it doesn't exist
       scoreboardRef.get().then((doc) => {
