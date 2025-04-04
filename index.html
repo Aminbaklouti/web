@@ -394,10 +394,12 @@
 
       async function checkGameWin(team, opponent) {
         try {
+          // Reset points for both teams when a game is won
           await scoreboardRef.update({
-            [`${team}Points`]: 0,
             [`${team}Games`]:
               parseInt(document.getElementById(`${team}Games`).textContent) + 1,
+            team1Points: 0,
+            team2Points: 0,
           });
 
           const teamGames = parseInt(
