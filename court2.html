@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Padel Scoreboard - SMU Radio Libertad</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <style>
+      :root {
+        --smu-red: #d03539;
+        --smu-blue: #0f5679;
+        --light-bg: #f7f7f7;
+        --text-light: #ffffff;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 10px;
+        background-color: var(--light-bg);
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .scoreboard {
+        background-color: var(--smu-blue);
+        color: var(--text-light);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        flex-grow: 1;
+      }
+
+      .teams {
+        display: flex;
+        gap: 10px;
+        height: 100%;
+      }
+
+      .team {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .team-1 {
+        background-color: var(--smu-red);
+      }
+      .team-2 {
+        background-color: var(--smu-blue);
+      }
+
+      .team-name {
+        font-size: 20px;
+        margin-bottom: 10px;
+        font-weight: bold;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .scores {
+        display: flex;
+        gap: 10px;
+        margin-top: auto;
+        flex-grow: 1;
+      }
+
+      .score-section {
+        flex: 1;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .score-section:active {
+        transform: scale(0.98);
+      }
+
+      .score-label {
+        font-size: 14px;
+        margin-bottom: 5px;
+      }
+
+      .score-value {
+        font-size: 36px;
+        padding: 10px;
+        border-radius: 6px;
+        margin: 0;
+        font-weight: 700;
+        transition: all 0.2s ease;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .controls {
+        background-color: white;
+        border-radius: 12px;
+        padding: 15px;
+        margin-top: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .control-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      button {
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 16px;
+        flex: 1;
+      }
+
+      button:active {
+        transform: scale(0.98);
+      }
+
+      .plus {
+        background-color: var(--smu-blue);
+        color: white;
+      }
+      .minus {
+        background-color: var(--smu-red);
+        color: white;
+      }
+      .reset {
+        background-color: #666;
+        color: white;
+      }
+
+      input[type="text"] {
+        padding: 10px;
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      @media (max-width: 768px) and (orientation: landscape) {
+        .team-name {
+          font-size: 18px;
+        }
+        .score-value {
+          font-size: 28px;
+        }
+        .score-label {
+          font-size: 12px;
+        }
+        button {
+          padding: 10px 15px;
+          font-size: 14px;
+        }
+        .score-section {
+          padding: 5px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .teams {
+          flex-direction: column;
+        }
+        .score-value {
+          font-size: 32px;
+        }
+      }
+
+      @media (max-width: 480px) and (orientation: landscape) {
+        .teams {
+          flex-direction: row;
+        }
+        .team {
+          min-height: 150px;
+        }
+        .score-value {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="scoreboard">
+        <div class="teams">
+          <div class="team team-1">
+            <div class="team-name" id="team1Name">Team 1</div>
+            <div class="scores">
+              <div class="score-section" onclick="handlePoint('team1')">
+                <div class="score-label">Sets</div>
+                <div class="score-value" id="team1Sets">0</div>
+              </div>
+              <div class="score-section" onclick="handlePoint('team1')">
+                <div class="score-label">Games</div>
+                <div class="score-value" id="team1Games">0</div>
+              </div>
+              <div class="score-section" onclick="handlePoint('team1')">
+                <div class="score-label">Points</div>
+                <div class="score-value" id="team1Points">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="team team-2">
+            <div class="team-name" id="team2Name">Team 2</div>
+            <div class="scores">
+              <div class="score-section" onclick="handlePoint('team2')">
+                <div class="score-label">Sets</div>
+                <div class="score-value" id="team2Sets">0</div>
+              </div>
+              <div class="score-section" onclick="handlePoint('team2')">
+                <div class="score-label">Games</div>
+                <div class="score-value" id="team2Games">0</div>
+              </div>
+              <div class="score-section" onclick="handlePoint('team2')">
+                <div class="score-label">Points</div>
+                <div class="score-value" id="team2Points">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <input type="text" id="team1NameInput" placeholder="Team 1 Name" />
+        <input type="text" id="team2NameInput" placeholder="Team 2 Name" />
+
+        <div class="control-row">
+          <button class="plus" onclick="handlePoint('team1')">+ Team 1</button>
+          <button class="minus" onclick="adjustPoints('team1', -1)">
+            - Team 1
+          </button>
+        </div>
+        <div class="control-row">
+          <button class="plus" onclick="handlePoint('team2')">+ Team 2</button>
+          <button class="minus" onclick="adjustPoints('team2', -1)">
+            - Team 2
+          </button>
+        </div>
+        <button class="reset" onclick="resetAll()">Reset All</button>
+      </div>
+    </div>
+
+    <script>
+      // Firebase Configuration (Replace with your config)
+      const firebaseConfig = {
+        apiKey: "AIzaSyCNrxD4Dt3hfQDxix5o7MZ7nd6PdRzaHuk",
+        authDomain: "padel-18f82.firebaseapp.com",
+        projectId: "padel-18f82",
+        storageBucket: "padel-18f82.firebasestorage.app",
+        messagingSenderId: "205345015948",
+        appId: "1:205345015948:web:467217faf8812f10ba53a9",
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      const scoreboardRef = db.collection("scoreboards").doc("currentMatch");
+
+      // Initialize Firestore document with default values if it doesn't exist
+      scoreboardRef.get().then((doc) => {
+        if (!doc.exists) {
+          scoreboardRef.set({
+            team1Name: "Team 1",
+            team2Name: "Team 2",
+            team1Sets: 0,
+            team2Sets: 0,
+            team1Games: 0,
+            team2Games: 0,
+            team1Points: 0,
+            team2Points: 0,
+            isSuperTiebreak: false,
+            currentSet: 1,
+          });
+        }
+      });
+
+      // Game State
+      let isSuperTiebreak = false;
+      let currentSet = 1;
+      const pointSequence = [0, 15, 30, 40];
+
+      // Real-time Listener
+      scoreboardRef.onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          updateUI(data);
+          isSuperTiebreak = data.isSuperTiebreak || false;
+          currentSet = data.currentSet || 1;
+        }
+      });
+
+      function updateUI(data) {
+        // Ensure numbers are properly formatted
+        document.getElementById("team1Name").textContent =
+          data.team1Name || "Team 1";
+        document.getElementById("team2Name").textContent =
+          data.team2Name || "Team 2";
+        document.getElementById("team1Sets").textContent = Number(
+          data.team1Sets || 0
+        );
+        document.getElementById("team2Sets").textContent = Number(
+          data.team2Sets || 0
+        );
+        document.getElementById("team1Games").textContent = Number(
+          data.team1Games || 0
+        );
+        document.getElementById("team2Games").textContent = Number(
+          data.team2Games || 0
+        );
+        document.getElementById("team1Points").textContent = Number(
+          data.team1Points || 0
+        );
+        document.getElementById("team2Points").textContent = Number(
+          data.team2Points || 0
+        );
+      }
+
+      // Modified handlePoint function with number validation
+      async function handlePoint(team) {
+        const opponent = team === "team1" ? "team2" : "team1";
+        const points =
+          parseInt(document.getElementById(`${team}Points`).textContent) || 0;
+
+        try {
+          if (isSuperTiebreak) {
+            await scoreboardRef.update({
+              [`${team}Points`]: points + 1,
+            });
+            checkSuperTiebreak(team, opponent);
+          } else {
+            const currentIndex = pointSequence.indexOf(points);
+            if (currentIndex === 3) {
+              checkGameWin(team, opponent);
+            } else {
+              await scoreboardRef.update({
+                [`${team}Points`]: pointSequence[currentIndex + 1],
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error updating points: ", error);
+        }
+      }
+
+      // Modified adjustPoints function with number validation
+      async function adjustPoints(team, change) {
+        const points =
+          parseInt(document.getElementById(`${team}Points`).textContent) || 0;
+
+        try {
+          if (isSuperTiebreak) {
+            await scoreboardRef.update({
+              [`${team}Points`]: Math.max(0, points + change),
+            });
+          } else {
+            const currentIndex = pointSequence.indexOf(points);
+            const newIndex = Math.max(0, currentIndex + change);
+            await scoreboardRef.update({
+              [`${team}Points`]: pointSequence[newIndex],
+            });
+          }
+        } catch (error) {
+          console.error("Error adjusting points: ", error);
+        }
+      }
+
+      async function checkGameWin(team, opponent) {
+        try {
+          await scoreboardRef.update({
+            [`${team}Games`]:
+              parseInt(document.getElementById(`${team}Games`).textContent) + 1,
+            team1Points: 0,
+            team2Points: 0,
+          });
+
+          const teamGames = parseInt(
+            document.getElementById(`${team}Games`).textContent
+          );
+          const opponentGames = parseInt(
+            document.getElementById(`${opponent}Games`).textContent
+          );
+
+          // Normal set win conditions
+          if (
+            (teamGames >= 6 && teamGames - opponentGames >= 2) ||
+            teamGames === 7
+          ) {
+            await awardSet(team);
+          }
+          // Regular tiebreak at 6-6 (to 7 points)
+          else if (teamGames === 6 && opponentGames === 6) {
+            await scoreboardRef.update({
+              isSuperTiebreak: true,
+              team1Points: 0,
+              team2Points: 0,
+            });
+          }
+        } catch (error) {
+          console.error("Error handling game win: ", error);
+        }
+      }
+
+      async function awardSet(team) {
+        try {
+          const updates = {
+            [`${team}Sets`]:
+              parseInt(document.getElementById(`${team}Sets`).textContent) + 1,
+            team1Games: 0,
+            team2Games: 0,
+            team1Points: 0,
+            team2Points: 0,
+            currentSet: currentSet + 1,
+          };
+
+          // Initialize super tiebreak if sets are 1-1
+          if (updates.currentSet === 3) {
+            updates.isSuperTiebreak = true;
+          }
+
+          await scoreboardRef.update(updates);
+
+          if (updates.currentSet > 3) {
+            endMatch();
+          }
+        } catch (error) {
+          console.error("Error awarding set: ", error);
+        }
+      }
+
+      async function startTiebreak() {
+        try {
+          await scoreboardRef.update({
+            isSuperTiebreak: true,
+            team1Points: 0,
+            team2Points: 0,
+          });
+        } catch (error) {
+          console.error("Error starting tiebreak: ", error);
+        }
+      }
+
+      async function startSuperTiebreak() {
+        try {
+          await scoreboardRef.update({
+            isSuperTiebreak: true,
+            team1Points: 0,
+            team2Points: 0,
+          });
+        } catch (error) {
+          console.error("Error starting super tiebreak: ", error);
+        }
+      }
+
+      async function checkSuperTiebreak(team, opponent) {
+        const teamPoints = parseInt(
+          document.getElementById(`${team}Points`).textContent
+        );
+        const opponentPoints = parseInt(
+          document.getElementById(`${opponent}Points`).textContent
+        );
+
+        // Determine target based on set number
+        const target = currentSet === 3 ? 10 : 7;
+        const winCondition =
+          currentSet === 3 ? teamPoints >= 10 : teamPoints >= 7;
+
+        if (winCondition) {
+          await awardSet(team);
+          // Only reset tiebreak if not in super tiebreak set
+          if (currentSet !== 3) {
+            await scoreboardRef.update({ isSuperTiebreak: false });
+          }
+        }
+      }
+
+      async function resetAll() {
+        if (confirm("Are you sure you want to reset all scores?")) {
+          try {
+            await scoreboardRef.update({
+              team1Sets: 0,
+              team2Sets: 0,
+              team1Games: 0,
+              team2Games: 0,
+              team1Points: 0,
+              team2Points: 0,
+              isSuperTiebreak: false,
+              currentSet: 1,
+            });
+            document.getElementById("team1NameInput").value = "";
+            document.getElementById("team2NameInput").value = "";
+          } catch (error) {
+            console.error("Error resetting scores: ", error);
+          }
+        }
+      }
+
+      // Team Name Input Handlers
+      document
+        .getElementById("team1NameInput")
+        .addEventListener("input", async (e) => {
+          try {
+            await scoreboardRef.update({
+              team1Name: e.target.value || "Team 1",
+            });
+          } catch (error) {
+            console.error("Error updating team name: ", error);
+          }
+        });
+
+      document
+        .getElementById("team2NameInput")
+        .addEventListener("input", async (e) => {
+          try {
+            await scoreboardRef.update({
+              team2Name: e.target.value || "Team 2",
+            });
+          } catch (error) {
+            console.error("Error updating team name: ", error);
+          }
+        });
+
+      // Initial Load
+      scoreboardRef.get().then((doc) => {
+        if (doc.exists) {
+          updateUI(doc.data());
+        }
+      });
+
+      function endMatch() {
+        alert("Match finished! Reset to start new match.");
+      }
+    </script>
+  </body>
+</html>

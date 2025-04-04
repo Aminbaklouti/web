@@ -394,7 +394,6 @@
 
       async function checkGameWin(team, opponent) {
         try {
-          // Reset points for both teams when a game is won
           await scoreboardRef.update({
             [`${team}Games`]:
               parseInt(document.getElementById(`${team}Games`).textContent) + 1,
@@ -409,10 +408,20 @@
             document.getElementById(`${opponent}Games`).textContent
           );
 
-          if (teamGames >= 6 && teamGames - opponentGames >= 2) {
+          // Normal set win conditions
+          if (
+            (teamGames >= 6 && teamGames - opponentGames >= 2) ||
+            teamGames === 7
+          ) {
             await awardSet(team);
-          } else if (teamGames === 6 && opponentGames === 6) {
-            await startSuperTiebreak();
+          }
+          // Regular tiebreak at 6-6 (to 7 points)
+          else if (teamGames === 6 && opponentGames === 6) {
+            await scoreboardRef.update({
+              isSuperTiebreak: true,
+              team1Points: 0,
+              team2Points: 0,
+            });
           }
         } catch (error) {
           console.error("Error handling game win: ", error);
@@ -421,7 +430,7 @@
 
       async function awardSet(team) {
         try {
-          await scoreboardRef.update({
+          const updates = {
             [`${team}Sets`]:
               parseInt(document.getElementById(`${team}Sets`).textContent) + 1,
             team1Games: 0,
@@ -429,13 +438,32 @@
             team1Points: 0,
             team2Points: 0,
             currentSet: currentSet + 1,
-          });
+          };
 
-          if (currentSet + 1 > 3) {
+          // Initialize super tiebreak if sets are 1-1
+          if (updates.currentSet === 3) {
+            updates.isSuperTiebreak = true;
+          }
+
+          await scoreboardRef.update(updates);
+
+          if (updates.currentSet > 3) {
             endMatch();
           }
         } catch (error) {
           console.error("Error awarding set: ", error);
+        }
+      }
+
+      async function startTiebreak() {
+        try {
+          await scoreboardRef.update({
+            isSuperTiebreak: true,
+            team1Points: 0,
+            team2Points: 0,
+          });
+        } catch (error) {
+          console.error("Error starting tiebreak: ", error);
         }
       }
 
@@ -459,14 +487,16 @@
           document.getElementById(`${opponent}Points`).textContent
         );
 
-        if (teamPoints >= 10 && teamPoints - opponentPoints >= 2) {
+        // Determine target based on set number
+        const target = currentSet === 3 ? 10 : 7;
+        const winCondition =
+          currentSet === 3 ? teamPoints >= 10 : teamPoints >= 7;
+
+        if (winCondition) {
           await awardSet(team);
-          try {
-            await scoreboardRef.update({
-              isSuperTiebreak: false,
-            });
-          } catch (error) {
-            console.error("Error ending super tiebreak: ", error);
+          // Only reset tiebreak if not in super tiebreak set
+          if (currentSet !== 3) {
+            await scoreboardRef.update({ isSuperTiebreak: false });
           }
         }
       }
