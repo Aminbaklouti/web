@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <title>Padel Scoreboard - SMU Radio Libertad</title>
+    <title>Padel Scoreboard - Padel For Everyone (PFE)</title>
 
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -14,66 +14,119 @@
 
     <style>
       :root {
-        --smu-red: #d03539;
-        --smu-blue: #0f5679;
-        --light-bg: #f7f7f7;
-        --text-light: #ffffff;
+        --pfe-primary: #2ecc71;
+        --pfe-secondary: #27ae60;
+        --pfe-accent: #f39c12;
+        --pfe-dark: #2c3e50;
+        --pfe-light: #ecf0f1;
+        --team1-color: #3498db;
+        --team2-color: #e74c3c;
+      }
+
+      * {
+        box-sizing: border-box;
       }
 
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         margin: 0;
         padding: 10px;
-        background-color: var(--light-bg);
+        background: linear-gradient(135deg, var(--pfe-light) 0%, #bdc3c7 100%);
+        min-height: 100vh;
       }
 
       .container {
-        max-width: 900px;
+        max-width: 1000px;
         margin: 0 auto;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
       }
 
-      .scoreboard {
-        background-color: var(--smu-blue);
-        color: var(--text-light);
+      .header {
+        text-align: center;
+        background: linear-gradient(
+          135deg,
+          var(--pfe-primary),
+          var(--pfe-secondary)
+        );
+        color: white;
+        padding: 20px;
         border-radius: 12px;
-        padding: 15px;
         margin-bottom: 15px;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .header h1 {
+        margin: 0 0 5px 0;
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      .header p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .scoreboard {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
         flex-grow: 1;
+      }
+
+      .match-info {
+        text-align: center;
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: var(--pfe-light);
+        border-radius: 8px;
+        font-weight: 600;
+        color: var(--pfe-dark);
       }
 
       .teams {
         display: flex;
-        gap: 10px;
+        gap: 15px;
         height: 100%;
       }
 
       .team {
         flex: 1;
         text-align: center;
-        padding: 10px;
-        border-radius: 8px;
+        padding: 15px;
+        border-radius: 12px;
         display: flex;
         flex-direction: column;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+      }
+
+      .team:hover {
+        transform: translateY(-2px);
       }
 
       .team-1 {
-        background-color: var(--smu-red);
+        background: linear-gradient(135deg, var(--team1-color), #2980b9);
+        color: white;
       }
+
       .team-2 {
-        background-color: #003e5d;
+        background: linear-gradient(135deg, var(--team2-color), #c0392b);
+        color: white;
       }
 
       .team-name {
-        font-size: 20px;
-        margin-bottom: 10px;
+        font-size: 22px;
+        margin-bottom: 15px;
         font-weight: bold;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
       }
 
       .scores {
@@ -85,13 +138,19 @@
 
       .score-section {
         flex: 1;
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: rgba(255, 255, 255, 0.2);
         border-radius: 8px;
-        padding: 8px;
+        padding: 10px;
         display: flex;
         flex-direction: column;
         cursor: pointer;
         transition: all 0.2s ease;
+        backdrop-filter: blur(10px);
+      }
+
+      .score-section:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
       }
 
       .score-section:active {
@@ -99,12 +158,14 @@
       }
 
       .score-label {
-        font-size: 14px;
-        margin-bottom: 5px;
+        font-size: 13px;
+        margin-bottom: 8px;
+        opacity: 0.9;
+        font-weight: 600;
       }
 
       .score-value {
-        font-size: 36px;
+        font-size: 40px;
         padding: 10px;
         border-radius: 6px;
         margin: 0;
@@ -114,14 +175,25 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        background-color: rgba(255, 255, 255, 0.3);
       }
 
       .controls {
-        background-color: white;
+        background: white;
         border-radius: 12px;
-        padding: 15px;
+        padding: 20px;
         margin-top: 15px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .control-section {
+        margin-bottom: 15px;
+      }
+
+      .control-section h3 {
+        margin: 0 0 10px 0;
+        color: var(--pfe-dark);
+        font-size: 16px;
       }
 
       .control-row {
@@ -132,12 +204,19 @@
 
       button {
         border: none;
-        padding: 12px 20px;
+        padding: 14px 20px;
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.2s ease;
         font-size: 16px;
+        font-weight: 600;
         flex: 1;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       }
 
       button:active {
@@ -145,43 +224,77 @@
       }
 
       .plus {
-        background-color: var(--smu-blue);
+        background: linear-gradient(
+          135deg,
+          var(--pfe-primary),
+          var(--pfe-secondary)
+        );
         color: white;
       }
+
       .minus {
-        background-color: var(--smu-red);
+        background: linear-gradient(135deg, var(--pfe-accent), #e67e22);
         color: white;
       }
+
       .reset {
-        background-color: #666;
+        background: linear-gradient(135deg, #95a5a6, #7f8c8d);
         color: white;
       }
 
       input[type="text"] {
-        padding: 10px;
+        padding: 12px;
         width: 100%;
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        margin-bottom: 8px;
-        font-size: 14px;
+        border: 2px solid var(--pfe-light);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        font-size: 15px;
+        transition: border-color 0.2s ease;
       }
 
-      @media (max-width: 768px) and (orientation: landscape) {
+      input[type="text"]:focus {
+        outline: none;
+        border-color: var(--pfe-primary);
+      }
+
+      .serving-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        background-color: var(--pfe-accent);
+        border-radius: 50%;
+        margin-left: 8px;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.6;
+          transform: scale(1.1);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .header h1 {
+          font-size: 24px;
+        }
         .team-name {
           font-size: 18px;
         }
         .score-value {
-          font-size: 28px;
+          font-size: 32px;
         }
         .score-label {
           font-size: 12px;
         }
         button {
-          padding: 10px 15px;
+          padding: 12px 16px;
           font-size: 14px;
-        }
-        .score-section {
-          padding: 5px;
         }
       }
 
@@ -190,29 +303,33 @@
           flex-direction: column;
         }
         .score-value {
-          font-size: 32px;
-        }
-      }
-
-      @media (max-width: 480px) and (orientation: landscape) {
-        .teams {
-          flex-direction: row;
-        }
-        .team {
-          min-height: 150px;
-        }
-        .score-value {
-          font-size: 24px;
+          font-size: 36px;
         }
       }
     </style>
   </head>
   <body>
     <div class="container">
+      <div class="header">
+        <h1>🎾 Padel For Everyone (PFE) 🎾</h1>
+        <p>Live Match Scoreboard</p>
+      </div>
+
       <div class="scoreboard">
+        <div class="match-info" id="matchInfo">
+          Current Set: 1 | Regular Game
+        </div>
+
         <div class="teams">
           <div class="team team-1">
-            <div class="team-name" id="team1Name">Team 1</div>
+            <div class="team-name">
+              <span id="team1Name">Team 1</span>
+              <span
+                id="serve1"
+                class="serving-indicator"
+                style="display: none"
+              ></span>
+            </div>
             <div class="scores">
               <div class="score-section" onclick="handlePoint('team1')">
                 <div class="score-label">Sets</div>
@@ -228,8 +345,16 @@
               </div>
             </div>
           </div>
+
           <div class="team team-2">
-            <div class="team-name" id="team2Name">Team 2</div>
+            <div class="team-name">
+              <span id="team2Name">Team 2</span>
+              <span
+                id="serve2"
+                class="serving-indicator"
+                style="display: none"
+              ></span>
+            </div>
             <div class="scores">
               <div class="score-section" onclick="handlePoint('team2')">
                 <div class="score-label">Sets</div>
@@ -249,27 +374,46 @@
       </div>
 
       <div class="controls">
-        <input type="text" id="team1NameInput" placeholder="Team 1 Name" />
-        <input type="text" id="team2NameInput" placeholder="Team 2 Name" />
+        <div class="control-section">
+          <h3>Team Names</h3>
+          <input
+            type="text"
+            id="team1NameInput"
+            placeholder="Enter Team 1 Name"
+          />
+          <input
+            type="text"
+            id="team2NameInput"
+            placeholder="Enter Team 2 Name"
+          />
+        </div>
 
-        <div class="control-row">
-          <button class="plus" onclick="handlePoint('team1')">+ Team 1</button>
-          <button class="minus" onclick="adjustPoints('team1', -1)">
-            - Team 1
-          </button>
+        <div class="control-section">
+          <h3>Score Points</h3>
+          <div class="control-row">
+            <button class="plus" onclick="handlePoint('team1')">
+              + Team 1 Point
+            </button>
+            <button class="minus" onclick="adjustPoints('team1', -1)">
+              - Team 1 Point
+            </button>
+          </div>
+          <div class="control-row">
+            <button class="plus" onclick="handlePoint('team2')">
+              + Team 2 Point
+            </button>
+            <button class="minus" onclick="adjustPoints('team2', -1)">
+              - Team 2 Point
+            </button>
+          </div>
         </div>
-        <div class="control-row">
-          <button class="plus" onclick="handlePoint('team2')">+ Team 2</button>
-          <button class="minus" onclick="adjustPoints('team2', -1)">
-            - Team 2
-          </button>
-        </div>
-        <button class="reset" onclick="resetAll()">Reset All</button>
+
+        <button class="reset" onclick="resetAll()">🔄 Reset Match</button>
       </div>
     </div>
 
     <script>
-      // Firebase Configuration (Replace with your config)
+      // Firebase Configuration
       const firebaseConfig = {
         apiKey: "AIzaSyBHOL7RwvYyxRRxl_UG_mMbmO6O-ueLDTc",
         authDomain: "padel-e850d.firebaseapp.com",
@@ -279,284 +423,279 @@
         appId: "1:83720478126:web:d0ae29e91cba747205fc3f",
       };
 
-      // Initialize Firebase
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
       const scoreboardRef = db.collection("scoreboards").doc("currentMatch");
 
-      // Initialize Firestore document with default values if it doesn't exist
+      // Game State
+      let gameState = {
+        team1Name: "Team 1",
+        team2Name: "Team 2",
+        team1Sets: 0,
+        team2Sets: 0,
+        team1Games: 0,
+        team2Games: 0,
+        team1Points: 0,
+        team2Points: 0,
+        isTiebreak: false,
+        currentSet: 1,
+        servingTeam: "team1",
+      };
+
+      let isUpdating = false;
+
+      // Initialize Firestore
       scoreboardRef.get().then((doc) => {
         if (!doc.exists) {
-          scoreboardRef.set({
-            team1Name: "Team 1",
-            team2Name: "Team 2",
-            team1Sets: 0,
-            team2Sets: 0,
-            team1Games: 0,
-            team2Games: 0,
-            team1Points: 0,
-            team2Points: 0,
-            isSuperTiebreak: false,
-            currentSet: 1,
-          });
+          scoreboardRef.set(gameState);
         }
       });
-
-      // Game State
-      let isSuperTiebreak = false;
-      let currentSet = 1;
-      const pointSequence = [0, 15, 30, 40];
 
       // Real-time Listener
       scoreboardRef.onSnapshot((doc) => {
-        if (doc.exists) {
-          const data = doc.data();
-          updateUI(data);
-          isSuperTiebreak = data.isSuperTiebreak || false;
-          currentSet = data.currentSet || 1;
+        if (doc.exists && !isUpdating) {
+          gameState = doc.data();
+          updateUI();
         }
       });
 
-      function updateUI(data) {
-        // Ensure numbers are properly formatted
-        document.getElementById("team1Name").textContent =
-          data.team1Name || "Team 1";
-        document.getElementById("team2Name").textContent =
-          data.team2Name || "Team 2";
-        document.getElementById("team1Sets").textContent = Number(
-          data.team1Sets || 0
-        );
-        document.getElementById("team2Sets").textContent = Number(
-          data.team2Sets || 0
-        );
-        document.getElementById("team1Games").textContent = Number(
-          data.team1Games || 0
-        );
-        document.getElementById("team2Games").textContent = Number(
-          data.team2Games || 0
-        );
-        document.getElementById("team1Points").textContent = Number(
-          data.team1Points || 0
-        );
-        document.getElementById("team2Points").textContent = Number(
-          data.team2Points || 0
-        );
+      function updateUI() {
+        document.getElementById("team1Name").textContent = gameState.team1Name;
+        document.getElementById("team2Name").textContent = gameState.team2Name;
+        document.getElementById("team1Sets").textContent = gameState.team1Sets;
+        document.getElementById("team2Sets").textContent = gameState.team2Sets;
+        document.getElementById("team1Games").textContent =
+          gameState.team1Games;
+        document.getElementById("team2Games").textContent =
+          gameState.team2Games;
+
+        // Display points correctly
+        if (gameState.isTiebreak) {
+          document.getElementById("team1Points").textContent =
+            gameState.team1Points;
+          document.getElementById("team2Points").textContent =
+            gameState.team2Points;
+        } else {
+          document.getElementById("team1Points").textContent = formatPoints(
+            gameState.team1Points,
+            gameState.team2Points
+          );
+          document.getElementById("team2Points").textContent = formatPoints(
+            gameState.team2Points,
+            gameState.team1Points
+          );
+        }
+
+        // Update match info
+        const setInfo = `Set ${gameState.currentSet}`;
+        const gameType = gameState.isTiebreak
+          ? gameState.currentSet === 3
+            ? "Super Tiebreak (to 10)"
+            : "Tiebreak (to 7)"
+          : "Regular Game";
+        document.getElementById(
+          "matchInfo"
+        ).textContent = `${setInfo} | ${gameType}`;
+
+        // Show serving indicator
+        document.getElementById("serve1").style.display =
+          gameState.servingTeam === "team1" ? "inline-block" : "none";
+        document.getElementById("serve2").style.display =
+          gameState.servingTeam === "team2" ? "inline-block" : "none";
       }
 
-      // Modified handlePoint function with number validation
+      function formatPoints(myPoints, oppPoints) {
+        if (myPoints < 40) return myPoints;
+        if (myPoints === 40) return 40;
+        return myPoints;
+      }
+
       async function handlePoint(team) {
-        const opponent = team === "team1" ? "team2" : "team1";
-        const points =
-          parseInt(document.getElementById(`${team}Points`).textContent) || 0;
+        if (isUpdating) return;
+        isUpdating = true;
 
         try {
-          if (isSuperTiebreak) {
-            await scoreboardRef.update({
-              [`${team}Points`]: points + 1,
-            });
-            checkSuperTiebreak(team, opponent);
+          const opponent = team === "team1" ? "team2" : "team1";
+
+          if (gameState.isTiebreak) {
+            gameState[`${team}Points`]++;
+            await checkTiebreakWin(team, opponent);
           } else {
-            const currentIndex = pointSequence.indexOf(points);
-            if (currentIndex === 3) {
-              checkGameWin(team, opponent);
-            } else {
-              await scoreboardRef.update({
-                [`${team}Points`]: pointSequence[currentIndex + 1],
-              });
+            await handleRegularPoint(team, opponent);
+          }
+
+          await saveState();
+        } catch (error) {
+          console.error("Error handling point:", error);
+        } finally {
+          isUpdating = false;
+        }
+      }
+
+      async function handleRegularPoint(team, opponent) {
+        const myPoints = gameState[`${team}Points`];
+        const oppPoints = gameState[`${opponent}Points`];
+
+        // Standard point progression: 0, 15, 30, 40
+        if (myPoints === 0) {
+          gameState[`${team}Points`] = 15;
+        } else if (myPoints === 15) {
+          gameState[`${team}Points`] = 30;
+        } else if (myPoints === 30) {
+          gameState[`${team}Points`] = 40;
+        } else if (myPoints === 40) {
+          // At 40, next point wins the game (even if opponent is at 40 - no advantage rule)
+          await winGame(team, opponent);
+        }
+      }
+
+      async function winGame(team, opponent) {
+        gameState[`${team}Games`]++;
+        gameState.team1Points = 0;
+        gameState.team2Points = 0;
+        switchServe();
+
+        const myGames = gameState[`${team}Games`];
+        const oppGames = gameState[`${opponent}Games`];
+
+        // Check for set win
+        if (myGames >= 6 && myGames - oppGames >= 2) {
+          await winSet(team);
+        } else if (myGames === 7) {
+          await winSet(team);
+        } else if (myGames === 6 && oppGames === 6) {
+          // Start tiebreak
+          gameState.isTiebreak = true;
+        }
+      }
+
+      async function winSet(team) {
+        gameState[`${team}Sets`]++;
+        gameState.team1Games = 0;
+        gameState.team2Games = 0;
+        gameState.team1Points = 0;
+        gameState.team2Points = 0;
+        gameState.isTiebreak = false;
+        gameState.currentSet++;
+
+        // Check if sets are 1-1, start super tiebreak
+        if (gameState.team1Sets === 1 && gameState.team2Sets === 1) {
+          gameState.isTiebreak = true;
+          gameState.currentSet = 3;
+        }
+
+        // Check for match win
+        if (gameState[`${team}Sets`] === 2) {
+          setTimeout(() => {
+            alert(
+              `🎉 ${gameState[`${team}Name`]} wins the match! Congratulations!`
+            );
+          }, 100);
+        }
+      }
+
+      async function checkTiebreakWin(team, opponent) {
+        const myPoints = gameState[`${team}Points`];
+        const oppPoints = gameState[`${opponent}Points`];
+        const target = gameState.currentSet === 3 ? 10 : 7;
+
+        if (myPoints >= target && myPoints - oppPoints >= 2) {
+          await winSet(team);
+        }
+      }
+
+      function switchServe() {
+        gameState.servingTeam =
+          gameState.servingTeam === "team1" ? "team2" : "team1";
+      }
+
+      async function adjustPoints(team, change) {
+        if (isUpdating) return;
+        isUpdating = true;
+
+        try {
+          if (gameState.isTiebreak) {
+            gameState[`${team}Points`] = Math.max(
+              0,
+              gameState[`${team}Points`] + change
+            );
+          } else {
+            const currentPoints = gameState[`${team}Points`];
+            if (change < 0) {
+              if (currentPoints === 40) gameState[`${team}Points`] = 30;
+              else if (currentPoints === 30) gameState[`${team}Points`] = 15;
+              else if (currentPoints === 15) gameState[`${team}Points`] = 0;
             }
           }
+          await saveState();
         } catch (error) {
-          console.error("Error updating points: ", error);
-        }
-      }
-
-      // Modified adjustPoints function with number validation
-      async function adjustPoints(team, change) {
-        const points =
-          parseInt(document.getElementById(`${team}Points`).textContent) || 0;
-
-        try {
-          if (isSuperTiebreak) {
-            await scoreboardRef.update({
-              [`${team}Points`]: Math.max(0, points + change),
-            });
-          } else {
-            const currentIndex = pointSequence.indexOf(points);
-            const newIndex = Math.max(0, currentIndex + change);
-            await scoreboardRef.update({
-              [`${team}Points`]: pointSequence[newIndex],
-            });
-          }
-        } catch (error) {
-          console.error("Error adjusting points: ", error);
-        }
-      }
-
-      async function checkGameWin(team, opponent) {
-        try {
-          await scoreboardRef.update({
-            [`${team}Games`]:
-              parseInt(document.getElementById(`${team}Games`).textContent) + 1,
-            team1Points: 0,
-            team2Points: 0,
-          });
-
-          const teamGames = parseInt(
-            document.getElementById(`${team}Games`).textContent
-          );
-          const opponentGames = parseInt(
-            document.getElementById(`${opponent}Games`).textContent
-          );
-
-          // Normal set win conditions
-          if (
-            (teamGames >= 6 && teamGames - opponentGames >= 2) ||
-            teamGames === 7
-          ) {
-            await awardSet(team);
-          }
-          // Regular tiebreak at 6-6 (to 7 points)
-          else if (teamGames === 6 && opponentGames === 6) {
-            await scoreboardRef.update({
-              isSuperTiebreak: true,
-              team1Points: 0,
-              team2Points: 0,
-            });
-          }
-        } catch (error) {
-          console.error("Error handling game win: ", error);
-        }
-      }
-
-      async function awardSet(team) {
-        try {
-          const updates = {
-            [`${team}Sets`]:
-              parseInt(document.getElementById(`${team}Sets`).textContent) + 1,
-            team1Games: 0,
-            team2Games: 0,
-            team1Points: 0,
-            team2Points: 0,
-            currentSet: currentSet + 1,
-          };
-
-          // Initialize super tiebreak if sets are 1-1
-          if (updates.currentSet === 3) {
-            updates.isSuperTiebreak = true;
-          }
-
-          await scoreboardRef.update(updates);
-
-          if (updates.currentSet > 3) {
-            endMatch();
-          }
-        } catch (error) {
-          console.error("Error awarding set: ", error);
-        }
-      }
-
-      async function startTiebreak() {
-        try {
-          await scoreboardRef.update({
-            isSuperTiebreak: true,
-            team1Points: 0,
-            team2Points: 0,
-          });
-        } catch (error) {
-          console.error("Error starting tiebreak: ", error);
-        }
-      }
-
-      async function startSuperTiebreak() {
-        try {
-          await scoreboardRef.update({
-            isSuperTiebreak: true,
-            team1Points: 0,
-            team2Points: 0,
-          });
-        } catch (error) {
-          console.error("Error starting super tiebreak: ", error);
-        }
-      }
-
-      async function checkSuperTiebreak(team, opponent) {
-        const teamPoints = parseInt(
-          document.getElementById(`${team}Points`).textContent
-        );
-        const opponentPoints = parseInt(
-          document.getElementById(`${opponent}Points`).textContent
-        );
-
-        // Determine target based on set number
-        const target = currentSet === 3 ? 10 : 7;
-        const winCondition =
-          currentSet === 3 ? teamPoints >= 10 : teamPoints >= 7;
-
-        if (winCondition) {
-          await awardSet(team);
-          // Only reset tiebreak if not in super tiebreak set
-          if (currentSet !== 3) {
-            await scoreboardRef.update({ isSuperTiebreak: false });
-          }
+          console.error("Error adjusting points:", error);
+        } finally {
+          isUpdating = false;
         }
       }
 
       async function resetAll() {
-        if (confirm("Are you sure you want to reset all scores?")) {
+        if (confirm("Are you sure you want to reset the entire match?")) {
+          isUpdating = true;
           try {
-            await scoreboardRef.update({
+            gameState = {
+              team1Name: gameState.team1Name,
+              team2Name: gameState.team2Name,
               team1Sets: 0,
               team2Sets: 0,
               team1Games: 0,
               team2Games: 0,
               team1Points: 0,
               team2Points: 0,
-              isSuperTiebreak: false,
+              isTiebreak: false,
               currentSet: 1,
-            });
-            document.getElementById("team1NameInput").value = "";
-            document.getElementById("team2NameInput").value = "";
+              servingTeam: "team1",
+            };
+            await saveState();
           } catch (error) {
-            console.error("Error resetting scores: ", error);
+            console.error("Error resetting:", error);
+          } finally {
+            isUpdating = false;
           }
         }
       }
 
-      // Team Name Input Handlers
+      async function saveState() {
+        await scoreboardRef.set(gameState);
+        updateUI();
+      }
+
+      // Team Name Handlers
       document
         .getElementById("team1NameInput")
-        .addEventListener("input", async (e) => {
-          try {
-            await scoreboardRef.update({
-              team1Name: e.target.value || "Team 1",
-            });
-          } catch (error) {
-            console.error("Error updating team name: ", error);
+        .addEventListener("blur", async (e) => {
+          if (e.target.value.trim()) {
+            gameState.team1Name = e.target.value.trim();
+            await saveState();
           }
         });
 
       document
         .getElementById("team2NameInput")
-        .addEventListener("input", async (e) => {
-          try {
-            await scoreboardRef.update({
-              team2Name: e.target.value || "Team 2",
-            });
-          } catch (error) {
-            console.error("Error updating team name: ", error);
+        .addEventListener("blur", async (e) => {
+          if (e.target.value.trim()) {
+            gameState.team2Name = e.target.value.trim();
+            await saveState();
           }
         });
 
       // Initial Load
       scoreboardRef.get().then((doc) => {
         if (doc.exists) {
-          updateUI(doc.data());
+          gameState = doc.data();
+          updateUI();
+          document.getElementById("team1NameInput").value =
+            gameState.team1Name !== "Team 1" ? gameState.team1Name : "";
+          document.getElementById("team2NameInput").value =
+            gameState.team2Name !== "Team 2" ? gameState.team2Name : "";
         }
       });
-
-      function endMatch() {
-        alert("Match finished! Reset to start new match.");
-      }
     </script>
   </body>
 </html>
