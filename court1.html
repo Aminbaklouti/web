@@ -196,6 +196,43 @@
         font-size: 16px;
       }
 
+      .format-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .format-option {
+        flex: 1;
+        padding: 12px;
+        border: 2px solid var(--pfe-light);
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+        font-weight: 600;
+      }
+
+      .format-option:hover {
+        border-color: var(--pfe-primary);
+        transform: translateY(-2px);
+      }
+
+      .format-option.active {
+        background: linear-gradient(
+          135deg,
+          var(--pfe-primary),
+          var(--pfe-secondary)
+        );
+        color: white;
+        border-color: var(--pfe-primary);
+      }
+
+      .format-option input[type="radio"] {
+        display: none;
+      }
+
       .control-row {
         display: flex;
         gap: 10px;
@@ -375,6 +412,31 @@
 
       <div class="controls">
         <div class="control-section">
+          <h3>Match Format</h3>
+          <div class="format-selector">
+            <label class="format-option active" id="formatSuper">
+              <input
+                type="radio"
+                name="matchFormat"
+                value="supertiebreak"
+                checked
+                onclick="setMatchFormat('supertiebreak')"
+              />
+              Super Tie-break (to 10)
+            </label>
+            <label class="format-option" id="formatThird">
+              <input
+                type="radio"
+                name="matchFormat"
+                value="thirdset"
+                onclick="setMatchFormat('thirdset')"
+              />
+              Third Set
+            </label>
+          </div>
+        </div>
+
+        <div class="control-section">
           <h3>Team Names</h3>
           <input
             type="text"
@@ -440,6 +502,7 @@
         isTiebreak: false,
         currentSet: 1,
         servingTeam: "team1",
+        matchFormat: "supertiebreak", // "supertiebreak" or "thirdset"
       };
 
       let isUpdating = false;
@@ -489,7 +552,8 @@
         // Update match info
         const setInfo = `Set ${gameState.currentSet}`;
         const gameType = gameState.isTiebreak
-          ? gameState.currentSet === 3
+          ? gameState.currentSet === 3 &&
+            gameState.matchFormat === "supertiebreak"
             ? "Super Tiebreak (to 10)"
             : "Tiebreak (to 7)"
           : "Regular Game";
@@ -502,6 +566,17 @@
           gameState.servingTeam === "team1" ? "inline-block" : "none";
         document.getElementById("serve2").style.display =
           gameState.servingTeam === "team2" ? "inline-block" : "none";
+
+        // Update format selector
+        if (gameState.matchFormat === "supertiebreak") {
+          document.getElementById("formatSuper").classList.add("active");
+          document.getElementById("formatThird").classList.remove("active");
+          document.querySelector('input[value="supertiebreak"]').checked = true;
+        } else {
+          document.getElementById("formatThird").classList.add("active");
+          document.getElementById("formatSuper").classList.remove("active");
+          document.querySelector('input[value="thirdset"]').checked = true;
+        }
       }
 
       function formatPoints(myPoints, oppPoints) {
@@ -578,10 +653,16 @@
         gameState.isTiebreak = false;
         gameState.currentSet++;
 
-        // Check if sets are 1-1, start super tiebreak
+        // Check if sets are 1-1
         if (gameState.team1Sets === 1 && gameState.team2Sets === 1) {
-          gameState.isTiebreak = true;
-          gameState.currentSet = 3;
+          if (gameState.matchFormat === "supertiebreak") {
+            // Start super tiebreak
+            gameState.isTiebreak = true;
+            gameState.currentSet = 3;
+          } else {
+            // Continue to third set
+            gameState.currentSet = 3;
+          }
         }
 
         // Check for match win
@@ -597,7 +678,14 @@
       async function checkTiebreakWin(team, opponent) {
         const myPoints = gameState[`${team}Points`];
         const oppPoints = gameState[`${opponent}Points`];
-        const target = gameState.currentSet === 3 ? 10 : 7;
+
+        // Super tiebreak (to 10) when it's the 3rd set with supertiebreak format
+        // Regular tiebreak (to 7) for 6-6 in any set
+        const target =
+          gameState.currentSet === 3 &&
+          gameState.matchFormat === "supertiebreak"
+            ? 10
+            : 7;
 
         if (myPoints >= target && myPoints - oppPoints >= 2) {
           await winSet(team);
@@ -651,6 +739,7 @@
               isTiebreak: false,
               currentSet: 1,
               servingTeam: "team1",
+              matchFormat: gameState.matchFormat,
             };
             await saveState();
           } catch (error) {
@@ -658,6 +747,48 @@
           } finally {
             isUpdating = false;
           }
+        }
+      }
+
+      async function setMatchFormat(format) {
+        if (
+          gameState.team1Sets > 0 ||
+          gameState.team2Sets > 0 ||
+          gameState.team1Games > 0 ||
+          gameState.team2Games > 0
+        ) {
+          if (
+            !confirm(
+              "Changing match format will reset the current match. Continue?"
+            )
+          ) {
+            // Revert radio button
+            updateUI();
+            return;
+          }
+        }
+
+        isUpdating = true;
+        try {
+          gameState = {
+            team1Name: gameState.team1Name,
+            team2Name: gameState.team2Name,
+            team1Sets: 0,
+            team2Sets: 0,
+            team1Games: 0,
+            team2Games: 0,
+            team1Points: 0,
+            team2Points: 0,
+            isTiebreak: false,
+            currentSet: 1,
+            servingTeam: "team1",
+            matchFormat: format,
+          };
+          await saveState();
+        } catch (error) {
+          console.error("Error setting format:", error);
+        } finally {
+          isUpdating = false;
         }
       }
 
