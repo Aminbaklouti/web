@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>All Courts - Padel For Everyone (PFE)</title>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <style>
+      :root {
+        --pfe-primary: #2ecc71;
+        --pfe-secondary: #27ae60;
+        --pfe-accent: #f39c12;
+        --pfe-dark: #2c3e50;
+        --pfe-light: #ecf0f1;
+        --team1-color: #3498db;
+        --team2-color: #e74c3c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 10px;
+        background: linear-gradient(135deg, var(--pfe-light) 0%, #bdc3c7 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header {
+        text-align: center;
+        background: linear-gradient(
+          135deg,
+          var(--pfe-primary),
+          var(--pfe-secondary)
+        );
+        color: white;
+        padding: 16px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: bold;
+      }
+
+      .courts-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        flex-grow: 1;
+      }
+
+      .court-card {
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .court-label {
+        text-align: center;
+        font-weight: 700;
+        font-size: 16px;
+        color: var(--pfe-dark);
+        margin-bottom: 10px;
+        padding: 6px;
+        background-color: var(--pfe-light);
+        border-radius: 8px;
+      }
+
+      .teams {
+        display: flex;
+        gap: 10px;
+        flex-grow: 1;
+      }
+
+      .team {
+        flex: 1;
+        text-align: center;
+        padding: 12px;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .team-1 {
+        background: linear-gradient(135deg, var(--team1-color), #2980b9);
+        color: white;
+      }
+
+      .team-2 {
+        background: linear-gradient(135deg, var(--team2-color), #c0392b);
+        color: white;
+      }
+
+      .team-name {
+        font-size: 14px;
+        margin-bottom: 10px;
+        font-weight: bold;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+      }
+
+      .scores {
+        display: flex;
+        gap: 8px;
+        margin-top: auto;
+      }
+
+      .score-section {
+        flex: 1;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        backdrop-filter: blur(10px);
+      }
+
+      .score-label {
+        font-size: 11px;
+        margin-bottom: 4px;
+        opacity: 0.9;
+        font-weight: 600;
+      }
+
+      .score-value {
+        font-size: 24px;
+        padding: 6px;
+        border-radius: 6px;
+        margin: 0;
+        font-weight: 700;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(255, 255, 255, 0.3);
+      }
+
+      .serving-indicator {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background-color: var(--pfe-accent);
+        border-radius: 50%;
+        margin-left: 4px;
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.6;
+          transform: scale(1.1);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .courts-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .teams {
+          flex-direction: column;
+        }
+        .score-value {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🎾 All Courts - Padel For Everyone (PFE)</h1>
+      </div>
+
+      <div class="courts-grid">
+        <div class="court-card" data-court="1">
+          <div class="court-label">Court 1</div>
+          <div class="teams">
+            <div class="team team-1">
+              <div class="team-name">
+                <span class="court-team1-name">Team 1</span>
+                <span class="serving-indicator court-serve1" style="display: none"></span>
+              </div>
+              <div class="scores">
+                <div class="score-section">
+                  <div class="score-label">Sets</div>
+                  <div class="score-value court-team1-sets">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Games</div>
+                  <div class="score-value court-team1-games">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Points</div>
+                  <div class="score-value court-team1-points">0</div>
+                </div>
+              </div>
+            </div>
+            <div class="team team-2">
+              <div class="team-name">
+                <span class="court-team2-name">Team 2</span>
+                <span class="serving-indicator court-serve2" style="display: none"></span>
+              </div>
+              <div class="scores">
+                <div class="score-section">
+                  <div class="score-label">Sets</div>
+                  <div class="score-value court-team2-sets">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Games</div>
+                  <div class="score-value court-team2-games">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Points</div>
+                  <div class="score-value court-team2-points">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="court-card" data-court="2">
+          <div class="court-label">Court 2</div>
+          <div class="teams">
+            <div class="team team-1">
+              <div class="team-name">
+                <span class="court-team1-name">Team 1</span>
+                <span class="serving-indicator court-serve1" style="display: none"></span>
+              </div>
+              <div class="scores">
+                <div class="score-section">
+                  <div class="score-label">Sets</div>
+                  <div class="score-value court-team1-sets">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Games</div>
+                  <div class="score-value court-team1-games">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Points</div>
+                  <div class="score-value court-team1-points">0</div>
+                </div>
+              </div>
+            </div>
+            <div class="team team-2">
+              <div class="team-name">
+                <span class="court-team2-name">Team 2</span>
+                <span class="serving-indicator court-serve2" style="display: none"></span>
+              </div>
+              <div class="scores">
+                <div class="score-section">
+                  <div class="score-label">Sets</div>
+                  <div class="score-value court-team2-sets">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Games</div>
+                  <div class="score-value court-team2-games">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Points</div>
+                  <div class="score-value court-team2-points">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="court-card" data-court="3">
+          <div class="court-label">Court 3</div>
+          <div class="teams">
+            <div class="team team-1">
+              <div class="team-name">
+                <span class="court-team1-name">Team 1</span>
+                <span class="serving-indicator court-serve1" style="display: none"></span>
+              </div>
+              <div class="scores">
+                <div class="score-section">
+                  <div class="score-label">Sets</div>
+                  <div class="score-value court-team1-sets">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Games</div>
+                  <div class="score-value court-team1-games">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Points</div>
+                  <div class="score-value court-team1-points">0</div>
+                </div>
+              </div>
+            </div>
+            <div class="team team-2">
+              <div class="team-name">
+                <span class="court-team2-name">Team 2</span>
+                <span class="serving-indicator court-serve2" style="display: none"></span>
+              </div>
+              <div class="scores">
+                <div class="score-section">
+                  <div class="score-label">Sets</div>
+                  <div class="score-value court-team2-sets">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Games</div>
+                  <div class="score-value court-team2-games">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Points</div>
+                  <div class="score-value court-team2-points">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="court-card" data-court="4">
+          <div class="court-label">Court 4</div>
+          <div class="teams">
+            <div class="team team-1">
+              <div class="team-name">
+                <span class="court-team1-name">Team 1</span>
+                <span class="serving-indicator court-serve1" style="display: none"></span>
+              </div>
+              <div class="scores">
+                <div class="score-section">
+                  <div class="score-label">Sets</div>
+                  <div class="score-value court-team1-sets">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Games</div>
+                  <div class="score-value court-team1-games">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Points</div>
+                  <div class="score-value court-team1-points">0</div>
+                </div>
+              </div>
+            </div>
+            <div class="team team-2">
+              <div class="team-name">
+                <span class="court-team2-name">Team 2</span>
+                <span class="serving-indicator court-serve2" style="display: none"></span>
+              </div>
+              <div class="scores">
+                <div class="score-section">
+                  <div class="score-label">Sets</div>
+                  <div class="score-value court-team2-sets">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Games</div>
+                  <div class="score-value court-team2-games">0</div>
+                </div>
+                <div class="score-section">
+                  <div class="score-label">Points</div>
+                  <div class="score-value court-team2-points">0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyBHOL7RwvYyxRRxl_UG_mMbmO6O-ueLDTc",
+        authDomain: "padel-e850d.firebaseapp.com",
+        projectId: "padel-e850d",
+        storageBucket: "padel-e850d.firebasestorage.app",
+        messagingSenderId: "83720478126",
+        appId: "1:83720478126:web:d0ae29e91cba747205fc3f",
+      };
+
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      const collections = {
+        1: "scoreboards",
+        2: "scoreboards2",
+        3: "scoreboards3",
+        4: "scoreboards4",
+      };
+
+      function formatPoints(myPoints, oppPoints) {
+        if (myPoints < 40) return myPoints;
+        if (myPoints === 40) return 40;
+        return myPoints;
+      }
+
+      function updateCourtUI(courtNum, data) {
+        if (!data) return;
+        const card = document.querySelector(`.court-card[data-court="${courtNum}"]`);
+        if (!card) return;
+
+        const team1Name = card.querySelectorAll(".court-team1-name")[0];
+        const team2Name = card.querySelectorAll(".court-team2-name")[0];
+        const serve1 = card.querySelectorAll(".court-serve1")[0];
+        const serve2 = card.querySelectorAll(".court-serve2")[0];
+        const t1Sets = card.querySelectorAll(".court-team1-sets")[0];
+        const t2Sets = card.querySelectorAll(".court-team2-sets")[0];
+        const t1Games = card.querySelectorAll(".court-team1-games")[0];
+        const t2Games = card.querySelectorAll(".court-team2-games")[0];
+        const t1Points = card.querySelectorAll(".court-team1-points")[0];
+        const t2Points = card.querySelectorAll(".court-team2-points")[0];
+
+        team1Name.textContent = data.team1Name || "Team 1";
+        team2Name.textContent = data.team2Name || "Team 2";
+        t1Sets.textContent = data.team1Sets ?? 0;
+        t2Sets.textContent = data.team2Sets ?? 0;
+        t1Games.textContent = data.team1Games ?? 0;
+        t2Games.textContent = data.team2Games ?? 0;
+
+        if (data.isTiebreak) {
+          t1Points.textContent = data.team1Points ?? 0;
+          t2Points.textContent = data.team2Points ?? 0;
+        } else {
+          t1Points.textContent = formatPoints(data.team1Points ?? 0, data.team2Points ?? 0);
+          t2Points.textContent = formatPoints(data.team2Points ?? 0, data.team1Points ?? 0);
+        }
+
+        serve1.style.display = data.servingTeam === "team1" ? "inline-block" : "none";
+        serve2.style.display = data.servingTeam === "team2" ? "inline-block" : "none";
+      }
+
+      Object.keys(collections).forEach((courtNum) => {
+        const col = collections[courtNum];
+        db.collection(col)
+          .doc("currentMatch")
+          .onSnapshot((doc) => {
+            if (doc.exists) {
+              updateCourtUI(courtNum, doc.data());
+            }
+          });
+      });
+    </script>
+  </body>
+</html>
