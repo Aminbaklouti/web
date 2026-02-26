@@ -452,6 +452,15 @@
         </div>
 
         <div class="control-section">
+          <h3>Match Category</h3>
+          <input
+            type="text"
+            id="matchCategoryInput"
+            placeholder="Enter Match Category (e.g. P25, Pmixte ....)"
+          />
+        </div>
+
+        <div class="control-section">
           <h3>Score Points</h3>
           <div class="control-row">
             <button class="plus" onclick="handlePoint('team1')">
@@ -504,6 +513,7 @@
         currentSet: 1,
         servingTeam: "team1",
         matchFormat: "supertiebreak", // "supertiebreak" or "thirdset"
+        matchCategory: "", // ADDED
       };
 
       let isUpdating = false;
@@ -550,7 +560,7 @@
           );
         }
 
-        // Update match info
+        // Update match info — ADDED: append matchCategory if set
         const setInfo = `Set ${gameState.currentSet}`;
         const gameType = gameState.isTiebreak
           ? gameState.currentSet === 3 &&
@@ -558,9 +568,12 @@
             ? "Super Tiebreak (to 10)"
             : "Tiebreak (to 7)"
           : "Regular Game";
+        const category = gameState.matchCategory
+          ? ` | ${gameState.matchCategory}`
+          : "";
         document.getElementById(
           "matchInfo"
-        ).textContent = `${setInfo} | ${gameType}`;
+        ).textContent = `${setInfo} | ${gameType}${category}`;
 
         // Show serving indicator
         document.getElementById("serve1").style.display =
@@ -741,6 +754,7 @@
               currentSet: 1,
               servingTeam: "team1",
               matchFormat: gameState.matchFormat,
+              matchCategory: gameState.matchCategory, // ADDED: preserve category on reset
             };
             await saveState();
           } catch (error) {
@@ -784,6 +798,7 @@
             currentSet: 1,
             servingTeam: "team1",
             matchFormat: format,
+            matchCategory: gameState.matchCategory, // ADDED: preserve category on format change
           };
           await saveState();
         } catch (error) {
@@ -817,6 +832,14 @@
           }
         });
 
+      // ADDED: Match Category Handler
+      document
+        .getElementById("matchCategoryInput")
+        .addEventListener("blur", async (e) => {
+          gameState.matchCategory = e.target.value.trim();
+          await saveState();
+        });
+
       // Initial Load
       scoreboardRef.get().then((doc) => {
         if (doc.exists) {
@@ -826,6 +849,9 @@
             gameState.team1Name !== "Team 1" ? gameState.team1Name : "";
           document.getElementById("team2NameInput").value =
             gameState.team2Name !== "Team 2" ? gameState.team2Name : "";
+          // ADDED: populate category input on load
+          document.getElementById("matchCategoryInput").value =
+            gameState.matchCategory || "";
         }
       });
     </script>
